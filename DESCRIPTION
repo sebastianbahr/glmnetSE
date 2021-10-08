@@ -1,0 +1,14 @@
+Package: glmnetSE
+Type: glmnet
+Title: glmnetSE: Add bootstrap SE to glmnet for selected coefficients (no shrinkage)
+Version: 0.0.1
+Authors@R: person("Sebastian", "Bahr", email="sebastian.bahr@unibe.ch", role = c("cre","aut"))
+Description: Allows user to obtain confidence intervals and siginificance indication (alpha=0.05) in LASSO and ridge regression for selected variables which therfore get a shrikage value of zero.
+License: GPL-3
+URL: https://github.com/sebastianbahr/glmnetSE.git
+BugReports: https://github.com/sebastianbahr/glmnetSE/blob/main/issues
+Depends: R (>= 4.0.3)
+Encoding: UTF-8
+Language: en-US
+LazyData: true
+RoxygenNote: 7.1.1

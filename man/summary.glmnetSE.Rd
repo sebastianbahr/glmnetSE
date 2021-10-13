@@ -4,10 +4,12 @@
 \alias{summary.glmnetSE}
 \title{Summary Function for glmnetSE Objects}
 \usage{
-\method{summary}{glmnetSE}(object)
+\method{summary}{glmnetSE}(object, ...)
 }
 \arguments{
 \item{object}{A object of the class glmnetSE.}
+
+\item{...}{Additional arguments affecting the summary produced.}
 }
 \value{
 The output of a glmnetSE object and the performance metric if cross fold validation is used.
@@ -20,11 +22,8 @@ Print the coefficients with standard errors and confidence intervals of a glmnet
 # Estimate model
 glmnetSE.model <- glmnetSE(data=swiss,cf.no.shrnkg = c("Education"))
 
-# OUTPUT coefficients
-summary.glmnetSE(glmnetSE.model)
-
-# OUTPUT performance metric
-summary.glmnetSE(glmnetSE.model)
+# Display model output with summary
+summary(glmnetSE.model)
 }
 }
 \keyword{glmnetSE}

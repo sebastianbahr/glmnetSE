@@ -42,21 +42,27 @@ glmnetSE(
 \item{perf.metric}{A character string indicating the used performance metric to evaluate the performance of different lambdas and the final model. Can be either "mse" (mean squared error) or "mae" (mean absolute error). Is not applied when method "none" is used - default is "mse".}
 }
 \value{
-A data frame with all coefficients, confidence intervals and information about significance of the effect for the coefficients of interesst.
+A glmnetSE object which can be displayed using "summary" or "summary.glmnetSE".
 }
 \description{
-glmnet or cv.glmnet with bootstrap standard errors for selected coefficients with no shrinkage applied for them.
+Builds a glmnet or cv.glmnet model with bootstrap standard errors for selected coefficients with no shrinkage applied for them.
 }
 \examples{
 \dontrun{
 # GAUSSIAN with no cross validation and coefficient of interest is Education
-glmnetSE(data=swiss,cf.no.shrnkg = c("Education"), alpha=1, method="none", r=100, seed = 123, family="gaussian")
+glmnetSE(data=swiss,cf.no.shrnkg = c("Education"), alpha=1, method="none", r=100,
+         seed = 123, family="gaussian")
 
 
 # BINOMIAL with 10-fold cross validation selecting the lambda at which the
 # smallest MSE is achieved, 500 bootstrap repetitions and coefficient of interest
 # are Education and Catholic.
-glmnetSE(data=swiss,cf.no.shrnkg = c("Education", "Catholic"), alpha=1, method="10CVmin", r=500, seed = 123, family="binomial")
+
+# Generate dichotom variable
+swiss$Fertility <- ifelse(swiss$Fertility >= median(swiss$Fertility), 1, 0)
+
+glmnetSE(data=swiss,cf.no.shrnkg = c("Education", "Catholic"), alpha=1, method="10CVmin", r=500,
+         seed = 123, family="binomial")
 }
 }
 \keyword{bootstrap}

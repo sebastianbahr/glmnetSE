@@ -3,7 +3,7 @@
 #####################
 
 #' @title glmnetSE: Add bootstrap SE to glmnet for selected coefficients (no shrinkage)
-#' @description glmnet or cv.glmnet with bootstrap standard errors for selected coefficients with no shrinkage applied for them.
+#' @description Builds a glmnet or cv.glmnet model with bootstrap standard errors for selected coefficients with no shrinkage applied for them.
 #' @param data A data frame, tibble or matrix object with the outcome variable in the first column and the feature variables in the following columns.
 #' @param cf.no.shrnkg A character string of the coefficients that will be interpreted, the inference statistic is of interest and therefore no shrinkage will be applied.
 #' @param alpha Alpha value [0,1]. An alpha of 0 results in a ridge regression and a value of 1 in a LASSO.
@@ -15,18 +15,24 @@
 #' @param type A character string indicating the type of calculated bootstrap intervals. It can be "norm", "basic", "stud", "perc", "bca". For more information check the "boot.ci" package - default is "basic".
 #' @param conf Indicates the confidence interval level - default is 0.95.
 #' @param perf.metric A character string indicating the used performance metric to evaluate the performance of different lambdas and the final model. Can be either "mse" (mean squared error) or "mae" (mean absolute error). Is not applied when method "none" is used - default is "mse".
-#' @return A data frame with all coefficients, confidence intervals and information about significance of the effect for the coefficients of interesst.
+#' @return A glmnetSE object which can be displayed using "summary" or "summary.glmnetSE".
 #' @keywords glmnet standard errors bootstrap shrinkage
 #' @examples
 #' \dontrun{
 #' # GAUSSIAN with no cross validation and coefficient of interest is Education
-#' glmnetSE(data=swiss,cf.no.shrnkg = c("Education"), alpha=1, method="none", r=100, seed = 123, family="gaussian")
+#' glmnetSE(data=swiss,cf.no.shrnkg = c("Education"), alpha=1, method="none", r=100,
+#'          seed = 123, family="gaussian")
 #'
 #'
 #' # BINOMIAL with 10-fold cross validation selecting the lambda at which the
 #' # smallest MSE is achieved, 500 bootstrap repetitions and coefficient of interest
 #' # are Education and Catholic.
-#' glmnetSE(data=swiss,cf.no.shrnkg = c("Education", "Catholic"), alpha=1, method="10CVmin", r=500, seed = 123, family="binomial")
+#'
+#' # Generate dichotom variable
+#' swiss$Fertility <- ifelse(swiss$Fertility >= median(swiss$Fertility), 1, 0)
+#'
+#' glmnetSE(data=swiss,cf.no.shrnkg = c("Education", "Catholic"), alpha=1, method="10CVmin", r=500,
+#'          seed = 123, family="binomial")
 #' }
 #' @export
 
@@ -40,8 +46,7 @@ glmnetSE <- function(data, cf.no.shrnkg, alpha=1, method="none", r=100, nlambda=
     packages,
     FUN = function(x) {
       if (!require(x, character.only = TRUE)) {
-        install.packages(x, dependencies = TRUE)
-        library(x, character.only = TRUE)
+        utils::install.packages(x, dependencies = TRUE)
       }
     }
   )
@@ -55,7 +60,7 @@ glmnetSE <- function(data, cf.no.shrnkg, alpha=1, method="none", r=100, nlambda=
   p.fac <- rep(1, ncol(data)-1)
   p.fac[no.shrink] <- 0
 
-  dep.var = colnames(data[,1])
+  dep.var <- colnames(data[1])
 
   if(alpha == 0){
     model_type = "Ridge"
@@ -72,15 +77,15 @@ glmnetSE <- function(data, cf.no.shrnkg, alpha=1, method="none", r=100, nlambda=
       d = data[indices,]
       y = as.matrix(d[,1])
       x = as.matrix(d[,-1])
-      fit = cv.glmnet(x=x, y=y, alpha=alpha, family=family, nlambda=nlambda, penalty.factor=p.fac, type.measure=perf.metric)
+      fit = glmnet::cv.glmnet(x=x, y=y, alpha=alpha, family=family, nlambda=nlambda, penalty.factor=p.fac, type.measure=perf.metric)
       return(coef(fit, s = "lambda.1se")[-1])
     }
 
     if(seed==0){
-      results = boot(data=data, statistic=boot.glmnet, R=r)
+      results = boot::boot(data=data, statistic=boot.glmnet, R=r)
     }else{
       set.seed(seed)
-      results = boot(data=data, statistic=boot.glmnet, R=r)
+      results = boot::boot(data=data, statistic=boot.glmnet, R=r)
     }
 
 
@@ -89,17 +94,17 @@ glmnetSE <- function(data, cf.no.shrnkg, alpha=1, method="none", r=100, nlambda=
       d = data[indices,]
       y = as.matrix(d[,1])
       x = as.matrix(d[,-1])
-      fit = cv.glmnet(x=x, y=y,alpha=alpha, family=family, nlambda=nlambda, penalty.factor=p.fac, type.measure=perf.metric)
+      fit = glmnet::cv.glmnet(x=x, y=y,alpha=alpha, family=family, nlambda=nlambda, penalty.factor=p.fac, type.measure=perf.metric)
       coef <- coef(fit, s = "lambda.min")[-1]
       metric <- fit$cvm[fit$lambda == fit$lambda.min]
       return(c(coef, metric))
     }
 
     if(seed==0){
-      results = boot(data=data, statistic=boot.glmnet, R=r)
+      results = boot::boot(data=data, statistic=boot.glmnet, R=r)
     }else{
       set.seed(seed)
-      results = boot(data=data, statistic=boot.glmnet, R=r)
+      results = boot::boot(data=data, statistic=boot.glmnet, R=r)
     }
 
 
@@ -108,15 +113,15 @@ glmnetSE <- function(data, cf.no.shrnkg, alpha=1, method="none", r=100, nlambda=
       d = data[indices,]
       y = as.matrix(d[,1])
       x = as.matrix(d[,-1])
-      fit = glmnet(x=x, y=y,alpha=alpha, family=family, nlambda=nlambda, penalty.factor=p.fac)
+      fit = glmnet::glmnet(x=x, y=y,alpha=alpha, family=family, nlambda=nlambda, penalty.factor=p.fac)
       return(coef(fit, s = 0.1)[-1])
     }
 
     if(seed==0){
-      results = boot(data=data, statistic=boot.glmnet, R=r)
+      results = boot::boot(data=data, statistic=boot.glmnet, R=r)
     }else{
       set.seed(seed)
-      results = boot(data=data, statistic=boot.glmnet, R=r)
+      results = boot::boot(data=data, statistic=boot.glmnet, R=r)
     }
 
   }
@@ -134,7 +139,7 @@ glmnetSE <- function(data, cf.no.shrnkg, alpha=1, method="none", r=100, nlambda=
     for(C in c){
       iter.loop <- iter.loop + 1
       coef.nm <- coef.name[iter.loop]
-      KI <- boot.ci(results, type=type, conf=conf, index=C)[[type]][4:5]
+      KI <- boot::boot.ci(results, type=type, conf=conf, index=C)[[type]][4:5]
       if(coef.nm %ni% cf.no.shrnkg){
         name_new <- coef.name[iter.loop]
         name <- c(name, name_new)
@@ -153,7 +158,7 @@ glmnetSE <- function(data, cf.no.shrnkg, alpha=1, method="none", r=100, nlambda=
         name <- c(name, name_new)
         coef_new <- results[["t0"]][C]
         coef <- c(coef, coef_new)
-        SE_new <- apply(results$t,2,sd)[C]
+        SE_new <- apply(results$t,2,stats::sd)[C]
         SE <- c(SE, SE_new)
         KI_low_new <- KI[1]
         KI_low <- c(KI_low, KI_low_new)
@@ -166,7 +171,7 @@ glmnetSE <- function(data, cf.no.shrnkg, alpha=1, method="none", r=100, nlambda=
         name <- c(name, name_new)
         coef_new <- results[["t0"]][C]
         coef <- c(coef, coef_new)
-        SE_new <- apply(results$t,2,sd)[C]
+        SE_new <- apply(results$t,2,stats::sd)[C]
         SE <- c(SE, SE_new)
         KI_low_new <- KI[1]
         KI_low <- c(KI_low, KI_low_new)
@@ -188,13 +193,13 @@ glmnetSE <- function(data, cf.no.shrnkg, alpha=1, method="none", r=100, nlambda=
     }
 
   }else{
-    metric.KI <- boot.ci(results, type=type, conf=conf, index=max(c)+1)[[type]][4:5]
+    metric.KI <- boot::boot.ci(results, type=type, conf=conf, index=max(c)+1)[[type]][4:5]
     metric <- results[["t0"]][max(c)+1]
     iter.loop <- 0
     for(C in c){
       iter.loop <- iter.loop + 1
       coef.nm <- coef.name[iter.loop]
-      KI <- boot.ci(results, type=type, conf=conf, index=C)[[type]][4:5]
+      KI <- boot::boot.ci(results, type=type, conf=conf, index=C)[[type]][4:5]
       if(coef.nm %ni% cf.no.shrnkg){
         name_new <- coef.name[iter.loop]
         name <- c(name, name_new)
@@ -213,7 +218,7 @@ glmnetSE <- function(data, cf.no.shrnkg, alpha=1, method="none", r=100, nlambda=
         name <- c(name, name_new)
         coef_new <- results[["t0"]][C]
         coef <- c(coef, coef_new)
-        SE_new <- apply(results$t,2,sd)[C]
+        SE_new <- apply(results$t,2,stats::sd)[C]
         SE <- c(SE, SE_new)
         KI_low_new <- KI[1]
         KI_low <- c(KI_low, KI_low_new)
@@ -226,7 +231,7 @@ glmnetSE <- function(data, cf.no.shrnkg, alpha=1, method="none", r=100, nlambda=
         name <- c(name, name_new)
         coef_new <- results[["t0"]][C]
         coef <- c(coef, coef_new)
-        SE_new <- apply(results$t,2,sd)[C]
+        SE_new <- apply(results$t,2,stats::sd)[C]
         SE <- c(SE, SE_new)
         KI_low_new <- KI[1]
         KI_low <- c(KI_low, KI_low_new)
@@ -258,7 +263,6 @@ glmnetSE <- function(data, cf.no.shrnkg, alpha=1, method="none", r=100, nlambda=
 }
 
 
-
 #####################
 # summary function #
 #####################
@@ -266,6 +270,7 @@ glmnetSE <- function(data, cf.no.shrnkg, alpha=1, method="none", r=100, nlambda=
 #' @title Summary Function for glmnetSE Objects
 #' @description Print the coefficients with standard errors and confidence intervals of a glmnetSE object. The inference statistics are only available for the coefficients without shrinkage, because otherwise they are biased. If cross fold validation is applied the performance metric can be displayed.
 #' @param object A object of the class glmnetSE.
+#' @param ... Additional arguments affecting the summary produced.
 #' @return The output of a glmnetSE object and the performance metric if cross fold validation is used.
 #' @keywords glmnetSE summary results output
 #' @examples
@@ -273,15 +278,12 @@ glmnetSE <- function(data, cf.no.shrnkg, alpha=1, method="none", r=100, nlambda=
 #' # Estimate model
 #' glmnetSE.model <- glmnetSE(data=swiss,cf.no.shrnkg = c("Education"))
 #'
-#' # OUTPUT coefficients
-#' summary.glmnetSE(glmnetSE.model)
-#'
-#' # OUTPUT performance metric
-#' summary.glmnetSE(glmnetSE.model)
+#' # Display model output with summary
+#' summary(glmnetSE.model)
 #' }
 #' @export
 
-summary.glmnetSE <- function(object){
+summary.glmnetSE <- function(object, ...){
 
   if(object$metric_name == "not applied"){
     coef <- data.frame(cbind("Coefficients" = object$coefficients,
@@ -306,18 +308,22 @@ summary.glmnetSE <- function(object){
                                "Intervall.up" = round(object$metric_CI[2],2)))
   }
 
- cat(paste0(object$model_type), "model:\n")
- cat("Outcome variable:", paste0(object$outcome_var), "\n")
- cat("Variables without shrinkage:", paste0(object$variables_no_shrinkage), "\n")
- cat("\n\n")
- print(coef, row.names = FALSE)
- cat("\n\n")
- cat("Performance Metric: \n")
- if(object$metric_name == "not applied"){
-   cat(c("Metric only applicable with method '10CVmin' or '10CVoneSE'"), fill = getOption("width"))
- }else{
-   print(metric, row.names = FALSE)
- }
+  cat(paste0(object$model_type), "model:\n")
+  cat("Outcome variable:", paste0(object$outcome_var), "\n")
+  cat("Variables without shrinkage:", paste0(object$variables_no_shrinkage), "\n")
+  cat("\n\n")
+  print(coef, row.names = FALSE)
+  cat("\n\n")
+  cat("Performance Metric: \n")
+  if(object$metric_name == "not applied"){
+    cat(c("Metric only applicable with method '10CVmin' or '10CVoneSE'"), fill = getOption("width"))
+  }else{
+    print(metric, row.names = FALSE)
+  }
 
 }
+
+
+
+
 

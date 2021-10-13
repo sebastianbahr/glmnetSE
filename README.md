@@ -4,6 +4,7 @@
 <!-- badges: start -->
 [![R-CMD-check](https://github.com/sebastianbahr/glmnetSE/workflows/R-CMD-check/badge.svg)](https://github.com/sebastianbahr/glmnetSE/actions)
 [![License: GPL-3](https://img.shields.io/badge/license-GPL--3-blue.svg)](https://cran.r-project.org/web/licenses/GPL-3)
+[![R build status](https://github.com/sebastianbahr/glmnetSE/workflows/R-CMD-check/badge.svg)](https://github.com/sebastianbahr/glmnetSE/actions)
 <!-- badges: end -->
 
 The package "glmnetSE" allows the user to obtain bootstrap standard errors and confidence intervals for LASSO, ridge and elastic net models of the "glmnet" package. Because these regularization methods are implementing a shrinkage to the coefficients they represent not the true effect size and should neither be interpreted nor the estimation of standards errors is advisable. The package "glmnetSE" applies no shrinkage parameter to selected variables of interest, which than can be interpreted by the user. For the selected variables bootstrap standard errors and confidence intervals are estimated. The implementation of "cv.glmnet" gives the user the ability to build robust models with 10-fold cross validation. Further, it is possible to select the least complex model within one standard error of the smallest model error and the model with the smallest model error. As model error MSE and MAE can be used.   

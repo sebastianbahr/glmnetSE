@@ -33,7 +33,7 @@
 glmnetSE <- function(data, cf.no.shrnkg, alpha=1, method="none", r=100, nlambda=100, seed=0, family="gaussian", type="basic", conf=0.95, perf.metric="mse"){
 
   # Needed packages
-  packages = c("dplyr", "boot", "glmnet")
+  packages = c("boot", "glmnet")
 
   ## Now load or install packages
   package.check <- lapply(

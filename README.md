@@ -135,4 +135,4 @@ summary(glmnetSE.model)
 plot(glmnetSE.model)
 ```
 
-![](.github/README_files/figure-gfm/example2-1.png)<!-- -->
+![](README_files/figure-gfm/example2-1.png)<!-- -->

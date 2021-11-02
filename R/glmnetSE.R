@@ -2,7 +2,7 @@
 # glmnetSE function #
 #####################
 
-#' @title glmnetSE: Add Nonparametric Bootstrap SE to Glmnet for Selected Coefficients (No Shrinkage)
+#' @title Add Nonparametric Bootstrap SE to 'glmnet' for Selected Coefficients (No Shrinkage)
 #' @description Builds a LASSO, Ridge, or Elastic Net model with \code{\link[glmnet:glmnet]{glmnet}} or \code{\link[glmnet:cv.glmnet]{cv.glmnet}} with bootstrap inference statistics (SE, CI, and p-value) for selected coefficients with no shrinkage applied for them. Model performance can be evaluated on test data and an automated alpha selection is implemented for Elastic Net. Parallelized computation is used to speed up the process.
 #' @param data A data frame, tibble, or matrix object with the outcome variable in the first column and the feature variables in the following columns. Note: all columns beside the first one are used as feature variables. Feature selection has to be done beforehand.
 #' @param cf.no.shrnkg A character string of the coefficients whose effect size will be interpreted, the inference statistic is of interest and therefore no shrinkage will be applied.

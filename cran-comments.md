@@ -1,5 +1,5 @@
 
-Concerning the note: It is no misspelling the words are referring to another R package (glmnet and the function cv.glmnet) and to my package (glmnetSE). 
+Concerning the note: It is no misspelling. The words are referring to another R package (glmnet and the function cv.glmnet) and to my package (glmnetSE). 
 
 Thanks a lot for checking and best wishes Sebastian
 

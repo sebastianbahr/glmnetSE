@@ -3,10 +3,12 @@
 
 <!-- badges: start -->
 
+[![R-CMD-check](https://github.com/sebastianbahr/glmnetSE/workflows/R-CMD-check/badge.svg)](https://github.com/sebastianbahr/glmnetSE/actions)
 [![License:
 GPL-3](https://img.shields.io/badge/license-GPL--3-blue.svg)](https://cran.r-project.org/web/licenses/GPL-3)
-[![R-CMD-check](https://github.com/sebastianbahr/glmnetSE/workflows/R-CMD-check/badge.svg)](https://github.com/sebastianbahr/glmnetSE/actions)
-[![metacran downloads](https://cranlogs.r-pkg.org/badges/glmnetSE)](https://cran.r-project.org/package=glmnetSE)
+[![metacran
+downloads](https://cranlogs.r-pkg.org/badges/glmnetSE)](https://cran.r-project.org/package=glmnetSE)
+[![CRAN\_Status\_Badge](https://www.r-pkg.org/badges/version/glmnetSE)](https://cran.r-project.org/package=glmnetSE)
 <!-- badges: end -->
 
 The package glmnetSE allows the user to build a LASSO, Ridge, or Elastic

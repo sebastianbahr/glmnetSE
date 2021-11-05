@@ -7,7 +7,7 @@
 #' @param data A data frame, tibble, or matrix object with the outcome variable in the first column and the feature variables in the following columns. Note: all columns beside the first one are used as feature variables. Feature selection has to be done beforehand.
 #' @param cf.no.shrnkg A character string of the coefficients whose effect size will be interpreted, the inference statistic is of interest and therefore no shrinkage will be applied.
 #' @param alpha Alpha value [0,1]. An alpha of 0 results in a ridge regression, a value of 1 in a LASSO, and a value between 0 and 1 in an Elastic Net. If a sequence of possible alphas is passed to the \code{alpha} argument the alpha of the best performing model (based on the selected \code{method} and \code{perf.metric}) is selected - default is 1.
-#' @param method A character string defining if 10-fold cross-validation is used or not. Possible methods are \code{none}: no cross-validation is applied and the coefficients for lambda = 0.1 are selected. \code{10CVoneSE }:  10-fold cross-validation is applied and the lambda of the least complex model with an MSE within one standard error of the smallest MSE is selected.  \code{10CVmin}: 10-fold cross-validation is applied and the lambda at which the MSE is the smallest is selected - default is \code{10CVoneSE}.
+#' @param method A character string defining if 10-fold cross-validation is used or not. Possible methods are \code{none}: no cross-validation is applied and the coefficients for lambda = 0.1 are selected. \code{10CVoneSE }:  10-fold cross-validation is applied and the lambda of the least complex model with an MSE within one standard error of the smallest MSE is selected. \code{10CVmin}: 10-fold cross-validation is applied and the lambda at which the MSE is the smallest is selected - default is \code{10CVoneSE}.
 #' @param test A data frame, tibble, or matrix object with the same outcome and feature variables as supplied to \code{data} which includes test-observations not used for the training of the model.
 #' @param r Number of nonparametric bootstrap repetitions - default is 250
 #' @param nlambda Number of tested lambda values - default is 100.
@@ -16,59 +16,55 @@
 #' @param type A character string indicating the type of calculated bootstrap intervals. It can be \code{norm}, \code{basic},  \code{perc}, or  \code{bca}. For more information check the \code{\link[boot:boot.ci]{boot.ci}} package - default is \code{basic}.
 #' @param conf Indicates the confidence interval level - default is 0.95.
 #' @param perf.metric A character string indicating the used performance metric to evaluate the performance of different lambdas and the final model. Can be either \code{mse} (mean squared error), \code{mae} (mean absolute error), \code{class} (classification error), or \code{auc} (area under the curve). Is not applied when method \code{none} is used - default is \code{mse}.
+#' @param ncore A numerical value indicates the number of build clusters and used cores in the computation. If not defined the maximum available number of cores of the OS -1 is used \code{mx.core}. It is not possible to use more than 32 cores, because efficiency decreases rapidly at this point see (Sloan et al. 2014) - default is \code{mx.core}.
 #' @return \code{glmnetSE } object which output can be displayed using \code{summary()} or \code{summary.glmnetSE()}. If family \code{binomial} and performance metric \code{auc} is used it is possible to plot the ROC curve with \code{plot()} or \code{plot.glmnetSE()}.
 #' @keywords glmnet standard errors bootstrap shrinkage
 #' @author  Sebastian Bahr, \email{sebastian.bahr@@unibe.ch}
-#' @references  Jerome Friedman, Trevor Hastie, Robert Tibshirani (2010). Regularization Paths for Generalized Linear Models via Coordinate Descent. Journal of Statistical Software, 33(1), 1-22. \url{https://www.jstatsoft.org/v33/i01/}.
-#' @references Noah Simon, Jerome Friedman, Trevor Hastie, Rob Tibshirani (2011). Regularization Paths for Cox's Proportional Hazards Model via Coordinate Descent. Journal of Statistical Software, 39(5), 1-13. \url{https://www.jstatsoft.org/v39/i05/}.
+#' @references Friedman J., Hastie T. and Tibshirani R. (2010). Regularization Paths for Generalized Linear Models via Coordinate Descent. Journal of Statistical Software, 33(1), 1-22. \url{https://www.jstatsoft.org/v33/i01/}.
+#' @references Simon N., Friedman J., Hastie T. and Tibshirani R. (2011). Regularization Paths for Cox's Proportional Hazards Model via Coordinate Descent. Journal of Statistical Software, 39(5), 1-13. \url{https://www.jstatsoft.org/v39/i05/}.
 #' @references Efron, B. and Tibshirani, R. (1993) An Introduction to the Bootstrap. Chapman & Hall. \url{https://cds.cern.ch/record/526679/files/0412042312_TOC.pdf}
+#' @references Sloan T.M., Piotrowski M., Forster T. and Ghazal P. (2014) Parallel Optimization of Bootstrapping in R. \url{https://arxiv.org/ftp/arxiv/papers/1401/1401.6389.pdf}
 #' @seealso  \code{\link{summary.glmnetSE}} and \code{\link{plot.glmnetSE}} methods.
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' # LASSO model with gaussian function, no cross validation, a seed of 123, and
-#' # the coefficient of interest is Education.
+#' # the coefficient of interest is Education. Two cores are used for the computation
 #'
-#' glmnetSE(data=swiss, cf.no.shrnkg = c("Education"), alpha=1, method="none", seed = 123)
+#' glmnetSE(data=swiss, cf.no.shrnkg = c("Education"), alpha=1, method="none", seed = 123, ncore = 2)
 #'
 #'
 #' # Ridge model with binomial function, 10-fold cross validation selecting the lambda
 #' # at which the smallest MSE is achieved, 500 bootstrap repetitions, no seed, the
-#' # performance metric AUC, and the coefficient of interest are Education and Catholic.
+#' # misclassification error is used as performance metric, and the coefficient of
+#' # interest are Education and Catholic. Two cores are used for the computation.
 #'
 #' # Generate dichotom variable
 #' swiss$Fertility <- ifelse(swiss$Fertility >= median(swiss$Fertility), 1, 0)
 #'
 #' glmnetSE(data=swiss, cf.no.shrnkg = c("Education", "Catholic"), alpha=0, method="10CVmin", r=500,
-#'          seed = 0, family="binomial", perf.metric = "auc")
+#'          seed = 0, family="binomial", perf.metric = "class", ncore = 2)
 #'
 #'
 #' # Elastic Net with gaussian function, automated alpha selection, selection the lambda
 #' # within one standard deviation of the best model, test data to obtain the performance
 #' # metric on it, a seed of 123, bias-corrected and accelerated confidence intervals, a
 #' # level of 0.9, the performance metric MAE, and the coefficient of interest is Education.
+#' # Two cores are used for the computation
 #'
-#' # Generate a train and test set before running the code!!!
+#' # Generate a train and test set
+#' set.seed(123)
+#' train_sample <- sample(nrow(swiss), 0.8*nrow(swiss))
+#'
+#' swiss.train <- swiss[train_sample, ]
+#' swiss.test  <- swiss[-train_sample, ]
 #'
 #' glmnetSE(data=swiss.train, cf.no.shrnkg = c("Education"), alpha=seq(0.1,0.9,0.1),
 #' method="10CVoneSE", test = swiss.test, seed = 123, family = "gaussian", type = "bca",
-#' conf = 0.9, perf.metric = "mae")
+#' conf = 0.9, perf.metric = "mae", ncore = 2)
 #' }
 #' @export
 
-glmnetSE <- function(data, cf.no.shrnkg, alpha=1, method="10CVoneSE", test="none",r=250, nlambda=100, seed=0, family="gaussian", type="basic", conf=0.95, perf.metric="mse"){
-
-  # Needed packages
-  packages = c("boot", "glmnet", "parallel")
-
-  # Install packages
-  package.check <- lapply(
-    packages,
-    FUN = function(x) {
-      if (!require(x, character.only = TRUE)) {
-        utils::install.packages(x, dependencies = TRUE)
-      }
-    }
-  )
+glmnetSE <- function(data, cf.no.shrnkg, alpha=1, method="10CVoneSE", test="none",r=250, nlambda=100, seed=0, family="gaussian", type="basic", conf=0.95, perf.metric="mse", ncore = "mx.core"){
 
   # Get coefficient names and amount
   coef.name <- colnames(data)[-1]
@@ -84,24 +80,24 @@ glmnetSE <- function(data, cf.no.shrnkg, alpha=1, method="10CVoneSE", test="none
 
   # Get name outcome variable
   dep.var <- colnames(data[1])
-  options(warn=-1)
 
   # Get model name
-  if(alpha == 0){
 
-    model_type = "Ridge"
+  if(length(alpha) > 1){
+
+    model_type = "Elastic Net"
 
   }else if(alpha == 1){
 
     model_type = "LASSO"
 
-  }else{
+  }else if(alpha == 0){
 
-    model_type = "Elastic Net"
+    model_type = "Ridge"
 
   }
 
-  options(warn = 1)
+
   "%ni%" <- Negate("%in%")
 
   # Warnings section
@@ -277,8 +273,19 @@ glmnetSE <- function(data, cf.no.shrnkg, alpha=1, method="10CVoneSE", test="none
 
   # Set everything up for cluster computation with maximal use of 32 CPUs because efficiency starts to drop (Sloan et al. 2014)
   envir = environment(glmnetSE)
-  cpus <- parallel::detectCores()
-  cl <- parallel::makeCluster(ifelse((cpus-1)>32, 32, (cpus-1)))
+
+  if(ncore == "mx.core"){
+
+    cpus <- parallel::detectCores()
+    cl <- parallel::makeCluster(ifelse((cpus-1)>32, 32, (cpus-1)))
+
+  }else if(typeof(ncore) == "double"){
+
+    cpus <- ncore
+    cl <- parallel::makeCluster(ncore)
+
+  }
+
   parallel::clusterExport(cl=cl, varlist = ls(envir), envir = envir)
 
 
@@ -383,11 +390,13 @@ glmnetSE <- function(data, cf.no.shrnkg, alpha=1, method="10CVoneSE", test="none
     if(seed==0){
 
       results = boot::boot(data=data, statistic=boot.glmnet, R=r, parallel = "snow", ncpus =cpus, cl=cl)
+      parallel::stopCluster(cl=cl)
 
     }else{
 
       set.seed(seed)
       results = boot::boot(data=data, statistic=boot.glmnet, R=r, parallel = "snow", ncpus =cpus, cl=cl)
+      parallel::stopCluster(cl=cl)
 
     }
 
@@ -490,11 +499,13 @@ glmnetSE <- function(data, cf.no.shrnkg, alpha=1, method="10CVoneSE", test="none
     if(seed==0){
 
       results = boot::boot(data=data, statistic=boot.glmnet, R=r, parallel = "snow", ncpus =cpus, cl=cl)
+      parallel::stopCluster(cl=cl)
 
     }else{
 
       set.seed(seed)
       results = boot::boot(data=data, statistic=boot.glmnet, R=r, parallel = "snow", ncpus =cpus, cl=cl)
+      parallel::stopCluster(cl=cl)
 
     }
 
@@ -514,18 +525,19 @@ glmnetSE <- function(data, cf.no.shrnkg, alpha=1, method="10CVoneSE", test="none
     if(seed==0){
 
       results = boot::boot(data=data, statistic=boot.glmnet, R=r, parallel = "snow", ncpus =cpus, cl=cl)
+      parallel::stopCluster(cl=cl)
 
     }else{
 
       set.seed(seed)
       results = boot::boot(data=data, statistic=boot.glmnet, R=r, parallel = "snow", ncpus =cpus, cl=cl)
+      parallel::stopCluster(cl=cl)
 
     }
 
-  }
 
-  # Shut down clusters
-  parallel::stopCluster(cl=cl)
+
+  }
 
 
   name <- NULL
@@ -593,15 +605,15 @@ glmnetSE <- function(data, cf.no.shrnkg, alpha=1, method="10CVoneSE", test="none
         coef <- c(coef, coef_new)
         SE_new <- apply(results$t,2,stats::sd)[C]
         SE <- c(SE, SE_new)
-        p.val_new <- mean(abs(results$t0[C]) <= abs(results$t[,C]-mean(results$t[,C])))
+        p.val_new <- mean(abs(results$t0[C]-(mean(results$t[,C])-results$t0[C])) <= abs(results$t[,C]-mean(results$t[,C])))
         p.val <- c(p.val, p.val_new)
         KI_low_new <- KI[1]
         KI_low <- c(KI_low, KI_low_new)
         KI_up_new <- KI[2]
         KI_up <- c(KI_up, KI_up_new)
-        star_new <- if(p.val[C] < 0.05 && p.val[C] > 0.01){
+        star_new <- if(p.val[C] < 0.05 && p.val[C] >= 0.01){
           "*"
-        }else if(p.val[C] < 0.01 && p.val[C] > 0.001){
+        }else if(p.val[C] < 0.01 && p.val[C] >= 0.001){
           "**"
         }else if(p.val[C] < 0.001){
           "***"
@@ -679,15 +691,15 @@ glmnetSE <- function(data, cf.no.shrnkg, alpha=1, method="10CVoneSE", test="none
         coef <- c(coef, coef_new)
         SE_new <- apply(results$t,2,stats::sd)[C]
         SE <- c(SE, SE_new)
-        p.val_new <- mean(abs(results$t0[C]) <= abs(results$t[,C]-mean(results$t[,C])))
+        p.val_new <- mean(abs(results$t0[C]-(mean(results$t[,C])-results$t0[C])) <= abs(results$t[,C]-mean(results$t[,C])))
         p.val <- c(p.val, p.val_new)
         KI_low_new <- KI[1]
         KI_low <- c(KI_low, KI_low_new)
         KI_up_new <- KI[2]
         KI_up <- c(KI_up, KI_up_new)
-        star_new <- if(p.val[C] < 0.05 && p.val[C] > 0.01){
+        star_new <- if(p.val[C] < 0.05 && p.val[C] >= 0.01){
           "*"
-        }else if(p.val[C] < 0.01 && p.val[C] > 0.001){
+        }else if(p.val[C] < 0.01 && p.val[C] >= 0.001){
           "**"
         }else if(p.val[C] < 0.001){
           "***"
@@ -779,10 +791,10 @@ glmnetSE <- function(data, cf.no.shrnkg, alpha=1, method="10CVoneSE", test="none
 #' @return The output of a \code{glmnetSE} object and the performance metric if cross-fold validation is used.
 #' @keywords glmnetSE summary results output
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' # Estimate model
 #'
-#' glmnetSE.model <- glmnetSE(data=swiss,cf.no.shrnkg = c("Education"))
+#' glmnetSE.model <- glmnetSE(data=swiss,cf.no.shrnkg = c("Education"), ncore = 2)
 #'
 #'
 #' # Display model output with summary
@@ -889,16 +901,24 @@ summary.glmnetSE <- function(object, ...){
 #' @return The ROC curve of a \code{glmnetSE} object.
 #' @keywords glmnetSE plot ROC
 #' @examples
-#' \dontrun{
-#' #' # Generate dichotom variable
+#' \donttest{
+#' # Generate dichotom variable
 #'
 #' swiss$Fertility <- ifelse(swiss$Fertility >= median(swiss$Fertility), 1, 0)
+#'
+#' # Generate a train and test set
+#' set.seed(1234)
+#' train_sample <- sample(nrow(swiss), 0.8*nrow(swiss))
+#'
+#' swiss.train <- swiss[train_sample, ]
+#' swiss.test  <- swiss[-train_sample, ]
 #'
 #'
 #' # Estimate model
 #'
 #' glmnetSE.model <- glmnetSE(data=swiss.train, cf.no.shrnkg = c("Education"),
-#' method = "10CVoneSE", test = swiss.test, family = "binomial", perf.metric = "auc")
+#' alpha=seq(0.1,0.9,0.1), method = "10CVoneSE", test = swiss.test, seed = 123,
+#' family = "binomial", perf.metric = "auc", ncore = 2)
 #'
 #'
 #' # Plot ROC curve of the fitted model on swiss.test data

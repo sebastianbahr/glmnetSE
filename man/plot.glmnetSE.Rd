@@ -18,16 +18,24 @@ The ROC curve of a \code{glmnetSE} object.
 Plot the ROC curve of a fitted  model \code{\link{glmnetSE}} (family \code{binomial} and performance metric \code{auc}) on supplied test data.
 }
 \examples{
-\dontrun{
-#' # Generate dichotom variable
+\donttest{
+# Generate dichotom variable
 
 swiss$Fertility <- ifelse(swiss$Fertility >= median(swiss$Fertility), 1, 0)
+
+# Generate a train and test set
+set.seed(1234)
+train_sample <- sample(nrow(swiss), 0.8*nrow(swiss))
+
+swiss.train <- swiss[train_sample, ]
+swiss.test  <- swiss[-train_sample, ]
 
 
 # Estimate model
 
 glmnetSE.model <- glmnetSE(data=swiss.train, cf.no.shrnkg = c("Education"),
-method = "10CVoneSE", test = swiss.test, family = "binomial", perf.metric = "auc")
+alpha=seq(0.1,0.9,0.1), method = "10CVoneSE", test = swiss.test, seed = 123,
+family = "binomial", perf.metric = "auc", ncore = 2)
 
 
 # Plot ROC curve of the fitted model on swiss.test data

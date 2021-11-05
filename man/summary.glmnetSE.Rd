@@ -18,10 +18,10 @@ The output of a \code{glmnetSE} object and the performance metric if cross-fold 
 Print the coefficients with standard errors, confidence intervals, and p-values of a \code{\link{glmnetSE}} model. The inference statistics are only available for the coefficients without shrinkage applied. They would be biased otherwise. Only if cross-fold validation is used in the \code{glmnetSE} model, the selected performance metric is displayed. If test data is supplied the performance metric on the train as test data is displayed.
 }
 \examples{
-\dontrun{
+\donttest{
 # Estimate model
 
-glmnetSE.model <- glmnetSE(data=swiss,cf.no.shrnkg = c("Education"))
+glmnetSE.model <- glmnetSE(data=swiss,cf.no.shrnkg = c("Education"), ncore = 2)
 
 
 # Display model output with summary

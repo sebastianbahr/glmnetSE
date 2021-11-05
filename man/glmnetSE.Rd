@@ -2,7 +2,7 @@
 % Please edit documentation in R/glmnetSE.R
 \name{glmnetSE}
 \alias{glmnetSE}
-\title{glmnetSE: Add Nonparametric Bootstrap SE to Glmnet for Selected Coefficients (No Shrinkage)}
+\title{Add Nonparametric Bootstrap SE to 'glmnet' for Selected Coefficients (No Shrinkage)}
 \usage{
 glmnetSE(
   data,
@@ -16,7 +16,8 @@ glmnetSE(
   family = "gaussian",
   type = "basic",
   conf = 0.95,
-  perf.metric = "mse"
+  perf.metric = "mse",
+  ncore = "mx.core"
 )
 }
 \arguments{
@@ -26,7 +27,7 @@ glmnetSE(
 
 \item{alpha}{Alpha value [0,1]. An alpha of 0 results in a ridge regression, a value of 1 in a LASSO, and a value between 0 and 1 in an Elastic Net. If a sequence of possible alphas is passed to the \code{alpha} argument the alpha of the best performing model (based on the selected \code{method} and \code{perf.metric}) is selected - default is 1.}
 
-\item{method}{A character string defining if 10-fold cross-validation is used or not. Possible methods are \code{none}: no cross-validation is applied and the coefficients for lambda = 0.1 are selected. \code{10CVoneSE }:  10-fold cross-validation is applied and the lambda of the least complex model with an MSE within one standard error of the smallest MSE is selected.  \code{10CVmin}: 10-fold cross-validation is applied and the lambda at which the MSE is the smallest is selected - default is \code{10CVoneSE}.}
+\item{method}{A character string defining if 10-fold cross-validation is used or not. Possible methods are \code{none}: no cross-validation is applied and the coefficients for lambda = 0.1 are selected. \code{10CVoneSE }:  10-fold cross-validation is applied and the lambda of the least complex model with an MSE within one standard error of the smallest MSE is selected. \code{10CVmin}: 10-fold cross-validation is applied and the lambda at which the MSE is the smallest is selected - default is \code{10CVoneSE}.}
 
 \item{test}{A data frame, tibble, or matrix object with the same outcome and feature variables as supplied to \code{data} which includes test-observations not used for the training of the model.}
 
@@ -43,6 +44,8 @@ glmnetSE(
 \item{conf}{Indicates the confidence interval level - default is 0.95.}
 
 \item{perf.metric}{A character string indicating the used performance metric to evaluate the performance of different lambdas and the final model. Can be either \code{mse} (mean squared error), \code{mae} (mean absolute error), \code{class} (classification error), or \code{auc} (area under the curve). Is not applied when method \code{none} is used - default is \code{mse}.}
+
+\item{ncore}{A numerical value indicates the number of build clusters and used cores in the computation. If not defined the maximum available number of cores of the OS -1 is used \code{mx.core}. It is not possible to use more than 32 cores, because efficiency decreases rapidly at this point see (Sloan et al. 2014) - default is \code{mx.core}.}
 }
 \value{
 \code{glmnetSE } object which output can be displayed using \code{summary()} or \code{summary.glmnetSE()}. If family \code{binomial} and performance metric \code{auc} is used it is possible to plot the ROC curve with \code{plot()} or \code{plot.glmnetSE()}.
@@ -51,42 +54,51 @@ glmnetSE(
 Builds a LASSO, Ridge, or Elastic Net model with \code{\link[glmnet:glmnet]{glmnet}} or \code{\link[glmnet:cv.glmnet]{cv.glmnet}} with bootstrap inference statistics (SE, CI, and p-value) for selected coefficients with no shrinkage applied for them. Model performance can be evaluated on test data and an automated alpha selection is implemented for Elastic Net. Parallelized computation is used to speed up the process.
 }
 \examples{
-\dontrun{
+\donttest{
 # LASSO model with gaussian function, no cross validation, a seed of 123, and
-# the coefficient of interest is Education.
+# the coefficient of interest is Education. Two cores are used for the computation
 
-glmnetSE(data=swiss, cf.no.shrnkg = c("Education"), alpha=1, method="none", seed = 123)
+glmnetSE(data=swiss, cf.no.shrnkg = c("Education"), alpha=1, method="none", seed = 123, ncore = 2)
 
 
 # Ridge model with binomial function, 10-fold cross validation selecting the lambda
 # at which the smallest MSE is achieved, 500 bootstrap repetitions, no seed, the
-# performance metric AUC, and the coefficient of interest are Education and Catholic.
+# misclassification error is used as performance metric, and the coefficient of
+# interest are Education and Catholic. Two cores are used for the computation.
 
 # Generate dichotom variable
 swiss$Fertility <- ifelse(swiss$Fertility >= median(swiss$Fertility), 1, 0)
 
 glmnetSE(data=swiss, cf.no.shrnkg = c("Education", "Catholic"), alpha=0, method="10CVmin", r=500,
-         seed = 0, family="binomial", perf.metric = "auc")
+         seed = 0, family="binomial", perf.metric = "class", ncore = 2)
 
 
 # Elastic Net with gaussian function, automated alpha selection, selection the lambda
 # within one standard deviation of the best model, test data to obtain the performance
 # metric on it, a seed of 123, bias-corrected and accelerated confidence intervals, a
 # level of 0.9, the performance metric MAE, and the coefficient of interest is Education.
+# Two cores are used for the computation
 
-# Generate a train and test set before running the code!!!
+# Generate a train and test set
+set.seed(123)
+train_sample <- sample(nrow(swiss), 0.8*nrow(swiss))
+
+swiss.train <- swiss[train_sample, ]
+swiss.test  <- swiss[-train_sample, ]
 
 glmnetSE(data=swiss.train, cf.no.shrnkg = c("Education"), alpha=seq(0.1,0.9,0.1),
 method="10CVoneSE", test = swiss.test, seed = 123, family = "gaussian", type = "bca",
-conf = 0.9, perf.metric = "mae")
+conf = 0.9, perf.metric = "mae", ncore = 2)
 }
 }
 \references{
-Jerome Friedman, Trevor Hastie, Robert Tibshirani (2010). Regularization Paths for Generalized Linear Models via Coordinate Descent. Journal of Statistical Software, 33(1), 1-22. \url{https://www.jstatsoft.org/v33/i01/}.
+Friedman J., Hastie T. and Tibshirani R. (2010). Regularization Paths for Generalized Linear Models via Coordinate Descent. Journal of Statistical Software, 33(1), 1-22. \url{https://www.jstatsoft.org/v33/i01/}.
 
-Noah Simon, Jerome Friedman, Trevor Hastie, Rob Tibshirani (2011). Regularization Paths for Cox's Proportional Hazards Model via Coordinate Descent. Journal of Statistical Software, 39(5), 1-13. \url{https://www.jstatsoft.org/v39/i05/}.
+Simon N., Friedman J., Hastie T. and Tibshirani R. (2011). Regularization Paths for Cox's Proportional Hazards Model via Coordinate Descent. Journal of Statistical Software, 39(5), 1-13. \url{https://www.jstatsoft.org/v39/i05/}.
 
 Efron, B. and Tibshirani, R. (1993) An Introduction to the Bootstrap. Chapman & Hall. \url{https://cds.cern.ch/record/526679/files/0412042312_TOC.pdf}
+
+Sloan T.M., Piotrowski M., Forster T. and Ghazal P. (2014) Parallel Optimization of Bootstrapping in R. \url{https://arxiv.org/ftp/arxiv/papers/1401/1401.6389.pdf}
 }
 \seealso{
 \code{\link{summary.glmnetSE}} and \code{\link{plot.glmnetSE}} methods.
